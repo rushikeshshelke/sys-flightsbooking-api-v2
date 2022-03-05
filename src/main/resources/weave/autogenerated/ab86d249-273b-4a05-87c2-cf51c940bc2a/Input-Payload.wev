@@ -1,0 +1,23 @@
+%dw 2.0
+
+type auto_ab86d249_273b_4a05_87c2_cf51c940bc2a_Input_Payload = {
+  isReturn: Boolean, 
+  couponName: String, 
+  isGuest: Boolean, 
+  origin: String, 
+  destination: String, 
+  noOfPassengers: Number, 
+  contactDetails: Number, 
+  flightNumber: Number, 
+  nameOfPassenger: {
+    fname: String, 
+    lname: String, 
+    _?: Any
+  }, 
+  bookingType: String, 
+  startDate: String, 
+  insuranceRequired: Boolean, 
+  username: String, 
+  _?: Any
+}
+

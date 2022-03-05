@@ -1,0 +1,67 @@
+#%RAML 1.0 Library
+
+traits:
+  errorResponse: !include ../traits/errorResponsesTrait.raml
+
+resourceTypes:
+  flightsCollection:
+    is : [errorResponse]
+    get:
+      description: It is used to fetch <<resourcePathName>>
+      responses:
+        200:
+          body:
+            application/json:
+              type: Flight[]
+              examples: <<getFlightsResponse>>
+    post:
+      description: It is used to create <<resourcePathName>>
+      body:
+        application/json:
+          type: Flight
+          examples: <<addFlight>>
+      responses:
+        201:
+          body:
+            application/json:
+              examples:
+                message: Flight has been added successfully.
+
+    put:
+      description: It is used to cancel <<resourcePathName>>
+      body:
+        application/json:
+          examples:
+            type: FlightCancellation
+            examples: <<cancelFlight>>
+      responses:
+        200:
+          body:
+            application/json:
+              examples:
+                message: Flight has been cancelled successfully.
+                
+  flightCollection:
+    is : [errorResponse]
+    get:
+      description: It is used to get specific <<resourcePathName>>
+      responses:
+        200:
+          body:
+            application/json:
+              type: Flight
+              examples: <<getSpecificFlight>>
+              
+    post:
+      description: It is used to book a <<resourcePathName>>
+      body:
+        application/json:
+          type: FlightBooking
+          examples: <<bookFlight>>
+      responses:
+        201:
+          body:
+            application/json:
+              type: FlightBookingResponse
+              examples: <<flightBookingResponse>>
+            

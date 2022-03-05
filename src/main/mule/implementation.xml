@@ -1,0 +1,557 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="getFlightsFlow" doc:id="25690410-4ea1-434c-bdb9-c75919a234fe" >
+		<logger level="INFO" doc:name="Logger" doc:id="c6b58fd4-561b-437e-8e4c-01c30c022766" message='"SYS API getFlightsFlow : "#[attributes.queryParams]'/>
+		<db:select doc:name="Select flights" doc:id="3b31e81b-3c18-4370-822a-fadce280f2e8" config-ref="Database_Config">
+			<db:sql ><![CDATA[select * from flights where origin ->> 'locationCode' = :ori and destination ->> 'locationCode' = :dest and startdate = :sdate and availableseats >= :passengers]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{ori: attributes.queryParams.origin, dest: attributes.queryParams.destination, sdate: attributes.queryParams.sdate, passengers: attributes.queryParams.pcount}]]]></db:input-parameters>
+		
+</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="ebae69c8-cf18-4912-ac9a-7940bc5d8fc1" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="027f353a-98e1-4b18-a1ad-b43f30ca0e66" message='"End of SYS API getFlightsFlow : "#[payload]' />
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="91f352a2-98df-47bb-abb5-933d2907f6bc" type="DB:CONNECTIVITY">
+				<logger level="INFO" doc:name="Logger" doc:id="4ce8bd52-5a16-48d9-8464-7694950dd6ab" message='"Error:"#[error.description]'/>
+				<ee:transform doc:name="Transform Message" doc:id="96f8b5d4-3037-4d26-8563-b3afb2c7f4ff" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"message": "DB connectivity issue... Try again!!!"
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<set-variable value="500" doc:name="Set Variable" doc:id="0bbf2eb2-c2d0-45bd-a5fe-daab5898671c" variableName="httpStatus"/>
+			</on-error-continue>
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="5682898f-f75f-4e80-9482-8076aa6fbf6e" type="DB:BAD_SQL_SYNTAX, DB:QUERY_EXECUTION, EXPRESSION, STREAM_MAXIMUM_SIZE_EXCEEDED">
+				<logger level="INFO" doc:name="Logger" doc:id="2f355911-a6b8-4196-a0f3-93363affbaa0" message='"Error:"#[error.description]'/>
+				<ee:transform doc:name="Transform Message" doc:id="f1a50eb0-81da-44c5-adfb-d370db4cf982" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"Error description": error.description
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<set-variable value="500" doc:name="Set Variable" doc:id="87377b75-9f25-44c7-852d-c21d53c0a28c" variableName="httpStatus"/>
+			</on-error-continue>
+		</error-handler>
+	
+</flow>
+	<flow name="getFlightFlow" doc:id="dade3440-7e01-4247-b211-464b128cb899" >
+		<logger level="INFO" doc:name="Logger" doc:id="1785a879-3434-41c2-b1e7-91ff29d40780" message='"SYS API getFlightFlow : "#[attributes.queryParams] #[attributes.uriParams]'/>
+		<db:select doc:name="Select flight" doc:id="9eec5cbd-3ad0-4607-bba3-5be7f13e42d0" config-ref="Database_Config">
+			<db:sql ><![CDATA[select * from flights where origin ->> 'locationCode' = :ori and destination ->> 'locationCode' = :dest and 
+startdate = :sdate and availableseats >= :passengers and flightnumber = :flightID]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{ori:attributes.queryParams.origin, dest: attributes.queryParams.destination, sdate: attributes.queryParams.sdate, passengers: attributes.queryParams.pcount, 
+	flightID: attributes.uriParams.'flightID'
+}]]]></db:input-parameters>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="e709bae3-8151-4104-a48a-445e2e7bf1de">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="50da1971-453d-42f2-90ac-8fc15fc1384d" message='"End of SYS API getFlightFlow : "#[payload]' />
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="4a607cdb-6fec-4bdb-a14e-eabcdbb53cf6" type="DB:CONNECTIVITY">
+				<logger level="INFO" doc:name="Logger" doc:id="d84b271e-27f2-49e4-8636-0d39f8da9e6d" message='"Error:"#[error.description]'/>
+				<ee:transform doc:name="Transform Message" doc:id="4d23710b-e275-40c9-bcf5-2234894213c7" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"message": "DB connectivity issue... Try again!!!"
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<set-variable value="500" doc:name="Set Variable" doc:id="40b7a02f-b9ca-4300-bfa9-2235f3b418b5" variableName="httpStatus"/>
+			</on-error-continue>
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="88cb2624-b324-42de-9d84-f22139af42ba" type="DB:BAD_SQL_SYNTAX, DB:QUERY_EXECUTION, EXPRESSION, STREAM_MAXIMUM_SIZE_EXCEEDED">
+				<logger level="INFO" doc:name="Logger" doc:id="12bf78ee-2b97-48a9-9027-8b9e1453d84e" message='"Error:"#[error.description]'/>
+				<ee:transform doc:name="Transform Message" doc:id="f2d5927f-4af6-4142-a4de-9ce279f2ebc1" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"Error description": error.description
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<set-variable value="500" doc:name="Set Variable" doc:id="49fa0064-999b-4f5c-8867-728a6a85b542" variableName="httpStatus"/>
+			</on-error-continue>
+		</error-handler>
+	</flow>
+	<flow name="addFlight" doc:id="d7eef6c4-1aeb-4b71-b11c-1ad7dba50143" >
+		<logger level="INFO" doc:name="Logger" doc:id="62756b2a-29e0-4ae5-be78-d541e1a7ede6" message='"SYS API addFlight : "#[payload]'/>
+		<set-variable value="#[payload]" doc:name="Set inputPayload" doc:id="e7cd5894-6f12-47a5-a189-2b8f476aa6c5" variableName="inputPayload"/>
+		<flow-ref doc:name="call getFlightDetails" doc:id="193d134f-08ab-4aa0-9374-7401124602e7" name="getFlightDetails"/>
+		<ee:transform doc:name="Transform Message" doc:id="d04b3df8-b650-4170-ab38-47d8dbb36444" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	ID: vars.inputPayload.ID,
+	name: vars.inputPayload.name,
+	flightNumber: vars.inputPayload.flightNumber as String,
+	description: vars.inputPayload.description,
+	rating: vars.inputPayload.rating,
+	startDate: vars.inputPayload.startDate,
+	endDate: vars.inputPayload.endDate,
+	startTime: vars.inputPayload.startTime,
+	endTime: vars.inputPayload.endTime,
+	layOver: vars.inputPayload.layOver,
+	noOfStops: vars.inputPayload.noOfStops,
+	availableSeats: vars.inputPayload.availableSeats,
+	price: (((write(vars.inputPayload.price,'application/json') replace "\n" with "") replace "\r" with "") replace "\t" with ""),
+	currency: vars.inputPayload.currency,
+	baggage: vars.inputPayload.baggage as Dictionary,
+	availableCoupons: (((write(vars.inputPayload.availableCoupons,'application/json') replace "\n" with "") replace "\r" with "") replace "\t" with ""),
+	stopLocation: (((write(vars.inputPayload.stopLocation,'application/json') replace "\n" with "") replace "\r" with "") replace "\t" with ""),
+	origin: (((write(vars.inputPayload.origin,'application/json') replace "\n" with "") replace "\r" with "") replace "\t" with ""),
+	destination: (((write(vars.inputPayload.destination,'application/json') replace "\n" with "") replace "\r" with "") replace "\t" with ""),
+	cancellationPolicy: (((write(vars.inputPayload.cancellationPolicy,'application/json') replace "\n" with "") replace "\r" with "") replace "\t" with ""),
+	reschedulePolicy: (((write(vars.inputPayload.reschedulePolicy,'application/json') replace "\n" with "") replace "\r" with "") replace "\t" with ""),
+	flightID: vars.flightDetails.id[0]
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<choice doc:name="Choice" doc:id="a2c38847-af17-44db-8bd1-451408ee1617" >
+			<when expression="#[payload.flightID == null]">
+				<db:insert doc:name="Insert flight" doc:id="d98eab0f-4b11-4ff9-9911-7d932c2dce69" config-ref="Database_Config">
+			<db:sql><![CDATA[insert into flights(id, name, flightnumber, description, rating, layover, noofstops, availableseats, 
+price, currency, baggage, origin, destination, stoplocation, startdate, starttime, 
+enddate, endtime, availablecoupons, cancellationpolicy, reschedulepolicy) 
+values (:id, :name, :fnum, :desc, :rating, :layover, :stops, :seats, (:price)::json, :currency, (:baggage)::json, (:origin)::json, (:destination)::json,
+(:stoplocation)::json, :startdate, :starttime, :enddate, :endtime, (:coupons)::json, (:cpolicy)::json, (:rpolicy)::json)]]></db:sql>
+			<db:input-parameters><![CDATA[#[{id: payload.ID, name: payload.name, fnum: payload.flightNumber, desc: payload.description, rating: payload.rating,
+ layover: payload.layOver, stops: payload.noOfStops, seats: payload.availableSeats,
+ price: payload.price, currency: payload.currency, baggage: payload.baggage,
+ origin: payload.origin, destination: payload.destination, stoplocation: payload.stopLocation,
+ startdate: payload.startDate, starttime: payload.startTime, enddate: payload.endDate,
+ endtime: payload.endTime, coupons: payload.availableCoupons, cpolicy: payload.cancellationPolicy,
+ rpolicy: payload.reschedulePolicy
+}]]]></db:input-parameters>
+		</db:insert>
+				<ee:transform doc:name="Transform Message" doc:id="1d387888-060e-4c6c-bd93-7e806fbfd2c0" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"message": "Flight has been added successfully."
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise >
+				<ee:transform doc:name="Transform Message" doc:id="f4c20029-d9f1-4ca6-89c3-e16fb7a87c44" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[output application/json
+---
+{
+	"message": "Flight already exists with ID " ++ (payload.ID as String)
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>
+		<logger level="INFO" doc:name="Logger" doc:id="e4eed78b-c434-4c8d-bb3e-8b6a37b6ca2e" message='"End of SYS API addFlight"'/>
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="f157d779-d6ae-4d3e-a7ad-b58bda385d26" type="DB:CONNECTIVITY">
+				<logger level="INFO" doc:name="Logger" doc:id="3f353e35-9821-43fe-a246-21ef7baff6f4" message='"Error:"#[error.description]'/>
+				<ee:transform doc:name="Transform Message" doc:id="3d5b6c4e-514e-4def-8f52-0ec83fd8e2f3" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"message": "DB connectivity issue... Try again!!!"
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<set-variable value="500" doc:name="Set Variable" doc:id="e03fcb69-0c3b-48ae-a966-c550890d8feb" variableName="httpStatus"/>
+			</on-error-continue>
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="fc0de938-5c06-445e-9b8e-c426d165b2c6" >
+				<logger level="INFO" doc:name="Logger" doc:id="e28ac096-09d4-4c37-9654-2660e32a5dd0" message='"Error:"#[error.description]'/>
+				<ee:transform doc:name="Transform Message" doc:id="3613b5be-0ecc-4ce2-8266-82d528716aa7" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"Error description": error.description
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<set-variable value="500" doc:name="Set Variable" doc:id="59a5fdcf-9b17-4504-869b-b09ff0119a3d" variableName="httpStatus"/>
+			</on-error-continue>
+		</error-handler>
+	</flow>
+	<flow name="bookFlight" doc:id="ab86d249-273b-4a05-87c2-cf51c940bc2a" >
+		<logger level="INFO" doc:name="Logger" doc:id="24fdfcde-cfd9-4f20-85b9-dbfe64646186" message='"SYS API bookFlight : "#[payload]'/>
+		<set-variable value="#[payload]" doc:name="Set inputPayload" doc:id="f519c2f7-6a40-41c0-9d93-ce846a80042f" variableName="inputPayload"/>
+		<flow-ref doc:name="call getFlightDetails" doc:id="92f32dce-4549-4f37-9de3-cc19895ffd26" name="getFlightDetails"/>
+		<choice doc:name="Choice" doc:id="b6287e58-a4f9-4889-9731-ff72b50add65" >
+			<when expression="#[vars.flightDetails.id[0] != null]">
+				<ee:transform doc:name="Transform Message" doc:id="7b20f8fd-b465-4c37-a3f3-d0d1ee912602">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	price1: read(vars.flightDetails.price[0].value,'application/json')[0],
+	price2: read(vars.flightDetails.price[0].value,'application/json')[1]
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+				<logger level="INFO" doc:name="Logger" doc:id="2b2b64b9-4900-47a7-aff8-6bcf2fed4343" message="#[payload.price1] #[payload.price2]" />
+				<flow-ref doc:name="call getBookingCount" doc:id="62f739e8-9cee-4aea-98c9-02e717790fd4" name="getBookingCount"/>
+				<flow-ref doc:name="call setBookingID" doc:id="6fba60a0-5d14-43e8-9ec2-e6a3048cf475" name="setBookingID"/>
+				<flow-ref doc:name="set setPNR" doc:id="1a87a20f-d739-4317-8916-0db0918ac77f" name="setPNR"/>
+				<ee:transform doc:name="Transform Message" doc:id="4cb4db4f-e154-4aaf-a3c3-df1b219efd17">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+
+fun calculateDiscount(price: Number, couponName: String) = do {
+	var discount = 
+	if (couponName contains('500OFF'))
+		if (price >= 5000)
+			500
+		else
+			0
+	else
+	if (couponName contains('100OFF'))
+		if (price >= 1000)
+			100
+		else
+			0
+	else
+		0
+	---
+	discount
+}
+
+fun checkPrice(bookingType: String) = do {
+	var amount = 
+	if (bookingType contains('SAVER'))
+		payload.price1
+	else
+		if (bookingType contains('FLEXI'))
+			payload.price2
+		else
+			payload.price1
+	---
+	amount
+}
+---
+{
+	name: vars.flightDetails.name[0],
+	flightID: vars.flightDetails.id[0] as Number,
+	flightNumber: vars.flightDetails.flightnumber[0] as String,
+	startDate: vars.flightDetails.startdate[0] as String,
+	startTime: vars.flightDetails.starttime[0] as String,
+	endDate: vars.flightDetails.enddate[0] as String,
+	endTime: vars.flightDetails.endtime[0] as String,
+	origin: write(vars.flightDetails.origin[0].value, 'application/json'),
+	destination: write(vars.flightDetails.destination[0].value, 'application/json'),
+	noOfPassengers: vars.inputPayload.noOfPassengers,
+	nameOfPassenger: vars.inputPayload.nameOfPassenger,
+	bookingType: vars.inputPayload.bookingType,
+	insuranceRequired: vars.inputPayload.insuranceRequired,
+	username: vars.inputPayload.username,
+	userid:vars.inputPayload.userid as String,
+	isGuest: vars.inputPayload.isGuest,
+	contactDetails: vars.inputPayload.contactDetails,
+	totalSeats: vars.flightDetails.availableseats[0] - vars.inputPayload.noOfPassengers,
+	couponName: vars.inputPayload.couponName,
+	couponState: vars.inputPayload.couponApplied,
+	bookingID: "IND0000" ++ (vars.bookingID as String),
+	PNR: vars.inputPayload.origin[0] ++ vars.inputPayload.destination[0] ++ (vars.PNR as String),
+	totalSeats: vars.flightDetails.availableseats[0] - (vars.inputPayload.noOfPassengers as Number),
+	price: {
+	"baseFare": ((checkPrice(vars.inputPayload.bookingType).baseFare * vars.inputPayload.noOfPassengers) as String),
+	"taxes": ((checkPrice(vars.inputPayload.bookingType).taxes * vars.inputPayload.noOfPassengers) as String),
+	"total": ((checkPrice(vars.inputPayload.bookingType).total * vars.inputPayload.noOfPassengers) - calculateDiscount((checkPrice(vars.inputPayload.bookingType).total as Number), vars.inputPayload.couponName)) as String
+	}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+				<set-variable value="#[payload]" doc:name="Set varPayload" doc:id="b39358b0-8bd8-4e74-9e73-7ccd90c3f6ab" variableName="varPayload"/>
+				<logger level="INFO" doc:name="Logger" doc:id="588b8bd2-94ff-4952-8880-653196090ff2" message="#[vars.varPayload]"/>
+				<choice doc:name="Choice" doc:id="ac0ad545-9e76-44dc-8db0-7bd9714699ad" >
+					<when expression="#[vars.inputPayload.noOfPassengers &lt;= vars.flightDetails.availableseats[0]]">
+						<try doc:name="Try" doc:id="93ee937d-48b2-4ebe-9e6f-cc2d2c5ec8e9" transactionalAction="ALWAYS_BEGIN">
+			<db:insert doc:name="Insert booking" doc:id="f125a215-798a-47c9-9ea4-a27fe7a88cf6" config-ref="Database_Config" transactionalAction="ALWAYS_JOIN">
+					<db:sql><![CDATA[insert into bookings(serviceid, username, fname, lname, contactnumber, servicename, bookingid, pnr, servicenumber, 
+startdate, enddate, starttime, endtime, origin, destination, noofpassengers, couponapplied, couponname, price, 
+insurance) values (:sid, :user, :fn, :ln, :cn, :sn, :bid, :pnr, :snum, :sd, :ed, :st, :et, :ori, :dest, :pcount, :coup, :coupn, (:pri)::json, :ins)]]></db:sql>
+					<db:input-parameters><![CDATA[#[{sid: vars.varPayload.flightID, user: vars.varPayload.username, fn: vars.varPayload.nameOfPassenger['fname'], ln: vars.varPayload.nameOfPassenger['lname'], cn: vars.varPayload.contactDetails, sn: vars.varPayload.name, bid: vars.varPayload.bookingID,
+ pnr: vars.varPayload.PNR, snum: vars.varPayload.flightNumber, sd: vars.varPayload.startDate, ed: vars.varPayload.endDate, st: vars.varPayload.startTime, et: vars.varPayload.endTime, ori: vars.varPayload.origin, 
+ dest: vars.varPayload.destination, pcount: vars.varPayload.noOfPassengers, coup: vars.varPayload.couponState, coupn: vars.varPayload.couponName, pri: vars.varPayload.price, ins: vars.varPayload.insuranceRequired}]]]></db:input-parameters>
+				</db:insert>
+			<db:update doc:name="Update flights" doc:id="027db5ce-d637-4473-81a9-9e60c089381d" config-ref="Database_Config" transactionalAction="ALWAYS_JOIN">
+					<db:sql><![CDATA[update flights set availableseats = :tseat where id = :fid]]></db:sql>
+					<db:input-parameters><![CDATA[#[{
+	tseat: vars.varpayload.totalSeats,
+	fid: vars.varpayload.flightID
+}]]]></db:input-parameters>
+				</db:update>
+		</try>
+						<ee:transform doc:name="Transform Message" doc:id="ab54072c-7059-47ce-a9be-bcfd7b99ab56" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	bookingID: vars.varPayload.bookingID,
+	PNR: vars.varPayload.PNR,
+	bookingType: vars.varPayload.bookingType,
+	nameOfPassenger: vars.varPayload.nameOfPassenger,
+	price: vars.varPayload.price,
+	contactDetails: vars.varPayload.contactDetails,
+	flightNumber: vars.varPayload.flightNumber,
+	startDate: vars.varPayload.startDate,
+	endDate: vars.varPayload.endDate,
+	startTime: vars.varPayload.startTime,
+	endTime: vars.varPayload.endTime,
+	origin: read(vars.varPayload.origin,'application/json'),
+	destination: read(vars.varPayload.destination,'application/json'),
+	noOfPassengers: vars.varPayload.noOfPassengers,
+	layOver: vars.flightDetails.layover[0],
+	noOfStops: vars.flightDetails.noofstops[0],
+	couponApplied: vars.varpayload.couponState,
+	couponName: vars.varPayload.couponName,
+	"message": "Flight has been booked successfully!!"
+}]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+					</when>
+					<otherwise >
+						<ee:transform doc:name="Transform Message" doc:id="5cc9c0f5-259d-4f83-9f1a-56a6ea20f4f8" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"message": "Flight is full."
+}]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+					</otherwise>
+				</choice>
+			</when>
+			<otherwise >
+				<ee:transform doc:name="Transform Message" doc:id="92c23037-1d46-4262-a465-9b3a7de74d58" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"message": "No flight for flightID " ++ vars.inputPayload.flightNumber as String
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>
+		<logger level="INFO" doc:name="Logger" doc:id="da853577-4df4-45da-889f-5bab0be7c67f" message='"End of SYS API bookFlight"'/>
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="e30c0b88-5ca2-4860-825d-f00bb3c19b46" type="DB:CONNECTIVITY">
+				<logger level="INFO" doc:name="Logger" doc:id="171a437b-da8d-43f7-ae88-48998bb549ef" message='"Error:"#[error.description]'/>
+				<ee:transform doc:name="Transform Message" doc:id="8c4f3da3-b2f3-4eb1-859f-28b7ab138291" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"message": "DB connectivity issue... Try again!!!"
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<set-variable value="500" doc:name="Set Variable" doc:id="ac52f4c0-4452-4b5c-b64d-de1f176dc399" variableName="httpStatus"/>
+			</on-error-continue>
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="6cd07c28-7c52-4f6a-a98f-3dc848b4a81b" >
+				<logger level="INFO" doc:name="Logger" doc:id="4cd4bc4c-363a-4b19-bf27-778e816eaf7b" message='"Error:"#[error.description]'/>
+				<ee:transform doc:name="Transform Message" doc:id="7ada93f5-dc99-419b-91d0-665b78e75e6b" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"Error description": error.description
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<set-variable value="500" doc:name="Set Variable" doc:id="eba72232-b21a-4f9c-b7b0-8328688a8c1b" variableName="httpStatus"/>
+			</on-error-continue>
+		</error-handler>
+	</flow>
+	<flow name="cancelFlight" doc:id="38d1e161-0c1a-4186-99a7-06be5da53f3c">
+		<logger level="INFO" doc:name="Logger" doc:id="c022f02e-a582-4495-86e3-32547d138096" message='"SYS API cancelFlight : "#[payload]' />
+		<set-variable value="#[payload]" doc:name="Set inputPayload" doc:id="58495e68-bcc8-436f-8f9b-dcfb1b5c8903" variableName="inputPayload"/>
+		<flow-ref doc:name="call getFlightDetails" doc:id="06d3a20b-824d-424c-831b-fb433027ffbe" name="getFlightDetails"/>
+		<choice doc:name="Choice" doc:id="c3c5fe06-3bdb-4b22-8876-99b55ea56261" >
+			<when expression="#[vars.flightDetails.id[0] != null]">
+				<flow-ref doc:name="call getBookingDetails" doc:id="05272954-0b2c-41f0-9d1f-45ae2c367fa6" name="getBookingDetails" />
+				<choice doc:name="Choice" doc:id="65d95b79-e0bf-42dd-a1b4-c7586fbaec43" >
+					<when expression="#[vars.bookingDetails.bookingid[0] != null]">
+						<try doc:name="Try" doc:id="eba1f51a-dec3-4c61-b30f-a47ccfa88b77" transactionalAction="ALWAYS_BEGIN">
+							<ee:transform doc:name="Transform Message" doc:id="343a7752-7d34-493d-ab2c-626eb6cd1692">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	bookingID : vars.inputPayload.bookingID,
+	totalSeats: vars.flightDetails.availableseats[0] + vars.bookingDetails.noofpassengers[0]
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+							<set-variable value="#[payload]" doc:name="Set varPayload" doc:id="18ad4aab-3bba-4a78-8129-4cb67bf254a8" variableName="varPayload" />
+							<db:delete doc:name="Delete Booking" doc:id="f68036a7-d3a1-4695-b5f7-75d9857b83b1" config-ref="Database_Config" transactionalAction="ALWAYS_JOIN">
+			<db:sql><![CDATA[delete from bookings where bookingid = :bid]]></db:sql>
+			<db:input-parameters><![CDATA[#[{bid: vars.varPayload.bookingID}]]]></db:input-parameters>
+		</db:delete>
+							<db:update doc:name="Update flights" doc:id="c5fb23ab-18a3-48bc-be98-e9471ac49a55" config-ref="Database_Config" transactionalAction="ALWAYS_JOIN">
+			<db:sql><![CDATA[update flights set availableseats = :tSeat where id = :fid]]></db:sql>
+			<db:input-parameters><![CDATA[#[{tSeat: vars.varPayload.totalSeats, 
+	fid: vars.flightDetails.id[0]
+}]]]></db:input-parameters>
+		</db:update>
+							<ee:transform doc:name="Transform Message" doc:id="8acd7b0e-8240-4f3f-b8c7-1fc162292c6d" >
+								<ee:message >
+									<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"message" : "Flight has been cancelled successfully."
+}]]></ee:set-payload>
+								</ee:message>
+							</ee:transform>
+						</try>
+					</when>
+					<otherwise >
+						<ee:transform doc:name="Transform Message" doc:id="7d70a773-e6aa-4dff-be1d-625e55948388" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"message": "No bookings for bookingID " ++ vars.inputPayload.bookingID as String
+}]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+					</otherwise>
+				</choice>
+			</when>
+			<otherwise >
+				<ee:transform doc:name="Transform Message" doc:id="25e64de3-679b-42d1-a4ea-ef63e7fbdbba" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"message": "No flight for flightID " ++ vars.inputPayload.flightNumber as String
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>
+		<logger level="INFO" doc:name="Logger" doc:id="496af552-4323-45bf-8e39-5bb89dd716cb" message='"SYS API cancelFlight"'/>
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="c30a8c08-6210-4141-973e-78de9986dfb8" type="DB:CONNECTIVITY">
+				<logger level="INFO" doc:name="Logger" doc:id="47d69073-a819-4b9c-8152-d1e60a2d5f43" message='"Error:"#[error.description]'/>
+				<ee:transform doc:name="Transform Message" doc:id="1887c160-e9f4-488e-8b79-8d4141f08cff" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"message": "DB connectivity issue... Try again!!!"
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<set-variable value="500" doc:name="Set Variable" doc:id="4c85de4f-1b72-47b7-a507-a41f1870899b" variableName="httpStatus"/>
+			</on-error-continue>
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="c52fa8d2-b820-47b5-a516-b0dcf81b87d5" >
+				<logger level="INFO" doc:name="Logger" doc:id="a820601c-99ec-4bad-939c-aa5f7a48d848" message='"Error:"#[error.description]'/>
+				<ee:transform doc:name="Transform Message" doc:id="8b2da301-4ca5-401d-bd14-ae356a954afa" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"Error description": error.description
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<set-variable value="500" doc:name="Set Variable" doc:id="0c955d20-2227-4d3c-aac0-e878fb7a5f15" variableName="httpStatus"/>
+			</on-error-continue>
+		</error-handler>
+	</flow>
+	<sub-flow name="getFlightDetails" doc:id="9d2e4eda-2565-41c6-861d-7e9b48689470" >
+		<db:select doc:name="Select" doc:id="aed83f53-e759-4239-b8d5-d8a1773ede1b" config-ref="Database_Config">
+			<db:sql ><![CDATA[select * from flights where id = :fid or (flightnumber = :fnum and origin ->> 'locationCode' = :ori and destination ->> 'locationCode' = :dest and startdate = :sdate)]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{fid: vars.inputPayload.ID, fnum: vars.inputPayload.flightNumber as String, ori: vars.inputPayload.origin, dest: vars.inputPayload.destination, sdate: vars.inputPayload.startDate}]]]></db:input-parameters>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="fb999237-2ee9-4877-94cd-3bd869581859" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<set-variable value="#[payload]" doc:name="Set flightDetails" doc:id="b952172c-841e-4571-97c2-6d0c3c2c3065" variableName="flightDetails"/>
+	</sub-flow>
+	<sub-flow name="getBookingDetails" doc:id="d281546f-9562-465c-b0db-737aa9dcabb8" >
+		<db:select doc:name="Select" doc:id="212b3618-66eb-4ec5-a1ca-0e69eadcf534" config-ref="Database_Config">
+			<db:sql ><![CDATA[select * from bookings where bookingid = :bid]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{bid: vars.inputPayload.bookingID}]]]></db:input-parameters>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="038bbabf-7a89-4576-9592-1b3eb0960f9b" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<set-variable value="#[payload]" doc:name="Set bookingDetails" doc:id="aba03487-e875-4708-957d-61b9937c1e82" variableName="bookingDetails"/>
+	</sub-flow>
+	<sub-flow name="getBookingCount" doc:id="0374c329-2f61-4108-94c9-ebcb67238086" >
+		<db:select doc:name="Select" doc:id="7acc87c6-2470-4f04-b1c7-e21c83faa70a" config-ref="Database_Config" target="counter" targetValue="#[payload[0].count]">
+			<db:sql ><![CDATA[select count(serviceid) from bookings]]></db:sql>
+		</db:select>
+	</sub-flow>
+	<sub-flow name="setBookingID" doc:id="c8cbd68b-7894-4d1b-9890-cc350b3e0f90" >
+		<set-variable value="#[vars.counter + 1]" doc:name="Set bookingID" doc:id="bba636ab-dcd0-447b-944b-88c7f1b7ecd5" variableName="bookingID"/>
+	</sub-flow>
+	<sub-flow name="setPNR" doc:id="beecf023-b749-4e69-89ce-d2e2b9ab7449" >
+		<set-variable value="#[(1000 + vars.counter + 1) as String]" doc:name="Set PNR" doc:id="0d55e7ba-c72a-4cbf-9291-d2039c1b309c" variableName="PNR"/>
+	</sub-flow>
+
+</mule>
