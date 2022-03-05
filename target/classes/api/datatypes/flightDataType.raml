@@ -1,0 +1,76 @@
+#%RAML 1.0 DataType
+
+type: object
+properties:
+  ID: integer
+  name: string
+  flightNumber: number
+  description: string
+  rating: integer
+  startDate: string
+  endDate: string
+  startTime: string
+  endTime: string
+  layOver: number
+  noOfStops: integer
+  availableSeats: integer
+  price:
+    type: array
+    required: true
+    items:
+      type: object
+      properties:
+          baseFare: number
+          taxes: number
+          total: number
+          bookingtype: string
+  currency: string
+  baggage:
+    type: object
+    properties:
+      total: integer
+      cabin: integer
+      checkin: integer
+  availableCoupons:
+    type: array
+    required: true
+    items:
+      type: object
+      properties:
+          code: string
+          description: string
+          rule: string
+  stopLocation:
+    type: object
+    properties:
+      location: string
+      departure: string
+      arrival: string
+  origin:
+    type: object
+    required: true
+    properties:
+      locationCode: string
+      locationDescription: string
+  destination:
+    type: object
+    required: true
+    properties:
+      locationCode: string
+      locationDescription: string
+  cancellationPolicy:
+    type: array
+    required: true
+    items:
+      type: object
+      properties:
+          timeFrame: string
+          charges: string
+  reschedulePolicy:
+    type: array
+    required: true
+    items:
+      type: object
+      properties:
+          timeFrame: string
+          charges: string

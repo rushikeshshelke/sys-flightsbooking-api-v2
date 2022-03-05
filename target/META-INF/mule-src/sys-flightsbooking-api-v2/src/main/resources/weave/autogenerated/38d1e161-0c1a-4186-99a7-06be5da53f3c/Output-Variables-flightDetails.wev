@@ -1,0 +1,9 @@
+%dw 2.0
+
+type auto_38d1e161_0c1a_4186_99a7_06be5da53f3c_Output_Variables_flightDetails = Array<{ _?: java_lang_Object }>
+type java_lang_Object = {|  |} {"typeAlias": "Object",
+"class": "java.lang.Object",
+"typeId": "java.lang.Object"}
+
+
+

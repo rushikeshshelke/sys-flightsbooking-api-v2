@@ -1,0 +1,45 @@
+%dw 2.0
+
+type auto_dade3440_7e01_4247_b211_464b128cb899_Output_Payload = {
+  baggage: {
+    total: Number, 
+    checkin: Number, 
+    cabin: Number, 
+    _?: Any
+  }, 
+  endDate: String, 
+  availableSeats: Number, 
+  origin: {
+    locationDescription: String, 
+    locationCode: String, 
+    _?: Any
+  }, 
+  rating: Number, 
+  availableCoupons: Array<{    code: String,     description: String,     rule: String,     _?: Any  }>, 
+  destination: {
+    locationDescription: String, 
+    locationCode: String, 
+    _?: Any
+  }, 
+  description: String, 
+  reschedulePolicy: Array<{    charges: String,     timeFrame: String,     _?: Any  }>, 
+  layOver: Number, 
+  flightNumber: Number, 
+  noOfStops: Number, 
+  price: Array<{    bookingtype: String,     baseFare: Number,     total: Number,     taxes: Number,     _?: Any  }>, 
+  stopLocation: {
+    arrival: String, 
+    location: String, 
+    departure: String, 
+    _?: Any
+  }, 
+  name: String, 
+  startTime: String, 
+  currency: String, 
+  ID: Number, 
+  endTime: String, 
+  startDate: String, 
+  cancellationPolicy: Array<{    charges: String,     timeFrame: String,     _?: Any  }>, 
+  _?: Any
+}
+
