@@ -14,18 +14,6 @@
     "attributes": {
       "exportedPackages": [],
       "exportedResources": [
-        "api/apispec-bookmyholiday-flights.raml",
-        "api/datatypes/flightBookingDataType.raml",
-        "api/datatypes/flightBookingResponseDataType.raml",
-        "api/datatypes/flightCancellationDataType.raml",
-        "api/datatypes/flightDataType.raml",
-        "api/examples/flightBookingExample.raml",
-        "api/examples/flightBookingResponseExample.raml",
-        "api/examples/flightCancellationExample.raml",
-        "api/examples/flightExample.raml",
-        "api/examples/flightsExample.raml",
-        "api/resourceTypes/flightResources.raml",
-        "api/traits/errorResponsesTrait.raml",
         "application-types.xml",
         "global.xml",
         "implementation.xml",
